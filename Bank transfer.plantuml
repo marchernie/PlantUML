@@ -1,0 +1,50 @@
+@startuml Банковский перевод с откатом операций
+
+title Банковский перевод с откатом операций
+
+actor Клиент
+participant "Сервис перевода" as TransferService
+participant "Баланс" as BalanceService
+participant "Компенсации" as CompensationService
+participant "Лог" as LogService
+database "База данных" as DB
+
+Клиент -> TransferService: Запрос на перевод
+
+TransferService -> BalanceService: Проверить баланс
+BalanceService -> DB: Получить данные баланса
+DB --> BalanceService: Отправить данные о балансе
+BalanceService --> TransferService: Результат проверки
+
+alt Баланс достаточен
+
+TransferService -> BalanceService: Списать средства
+BalanceService -> DB: Обновить баланс отправителя
+DB --> BalanceService: Отправить данные с новым балансом
+
+TransferService -> BalanceService: Зачислить получателю
+BalanceService -> DB: Обновить баланс получателя
+DB --> BalanceService: Отправить данные с новым балансом
+
+alt Зачисление успешно
+TransferService -> LogService: Записать "Успех"
+LogService -> DB: Сохранить статус
+TransferService --> Клиент: Уведомление об успехе перевода
+
+else Ошибка зачисления
+TransferService -> CompensationService: Инициировать откат
+CompensationService -> BalanceService: Вернуть средства отправителю
+BalanceService -> DB: Восстановить баланс
+DB --> BalanceService: Отправить данные о балансе
+CompensationService -> LogService: Записать "Откат"
+LogService -> DB: Сохранить статус
+TransferService --> Клиент: Уведомление об ошибке
+end
+
+else Недостаточно средств
+TransferService -> LogService: Записать "Ошибка: недостаточно средств"
+LogService -> DB: Сохранить статус
+TransferService --> Клиент: Уведомление об отказе
+end
+
+@enduml
