@@ -1,0 +1,28 @@
+@startuml Система уведомлений
+
+title Система уведомлений
+
+actor "Клиент интернет-магазина" as Client
+participant "Система оформления заказа" as OrderService
+participant "Брокер сообщений Kafka" as Kafka
+participant "Почтовый сервис" as EmailService
+participant "Сервис логирования" as LoggingService
+participant "Служба доставки" as DeliveryService
+
+Client -> OrderService : Оформление заказа
+OrderService -[#00AA00]-> OrderService : Создание order_created
+OrderService -[#00AA00]-> Kafka : publish(order_created)
+
+Kafka -[#0000FF]-> EmailService : Получение сообщения
+Kafka -[#0000FF]-> LoggingService : Получение сообщения
+Kafka -[#0000FF]-> DeliveryService : Получение сообщения
+
+EmailService -> EmailService : Отправка email
+LoggingService -> LoggingService : Запись в лог
+DeliveryService -> DeliveryService : Уведомление о доставке
+
+EmailService -[#FFAA00]-> Kafka : Подтверждение обработки
+LoggingService -[#FFAA00]-> Kafka : Подтверждение обработки
+DeliveryService -[#FFAA00]-> Kafka : Подтверждение обработки
+
+@enduml
