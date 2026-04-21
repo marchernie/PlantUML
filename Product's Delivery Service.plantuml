@@ -1,0 +1,34 @@
+@startuml Сервис доставки продуктов
+
+title Сервис доставки продуктов
+
+actor Клиент
+participant UI
+participant "Сервис заказов" as OrderService
+participant "Сервис склада" as WarehouseService
+participant "Сервис логистики" as DeliveryService
+participant "Сервис оплаты" as PaymentService
+database "База данных" as DB
+
+Клиент -> UI: Выбирает товары и оформляет заказ
+
+UI -> OrderService: Передает данные заказа
+OrderService -> DB: Сохраняет заказ
+
+OrderService -> WarehouseService: Запрос наличия товаров
+WarehouseService -> DB: Проверка остатков
+DB --> WarehouseService: Данные об остатках
+WarehouseService --> OrderService: Подтверждение наличия
+
+OrderService -> DeliveryService: Запрос на доставку
+DeliveryService -> DB: Сохраняет маршрут
+DeliveryService -> PaymentService: Передает данные для оплаты
+
+PaymentService -> DB: Фиксирует платеж
+PaymentService --> DeliveryService: Подтверждение оплаты
+
+DeliveryService -> OrderService: Уведомляет об отправке
+OrderService -> UI: Уведомляет об отправке
+UI -> Клиент: Информирует о статусе доставки
+
+@enduml
